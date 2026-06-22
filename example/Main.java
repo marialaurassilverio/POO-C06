@@ -1,17 +1,16 @@
 package org.example;
 
-import java.util.Scanner;      // permite ler dados digitados pelo usuário no teclado
-import java.util.ArrayList;    // estrutura de lista para guardar os clientes cadastrados
+import java.util.Scanner;
+import java.util.ArrayList;
 
 public class Main {
 
-    // ───── recursos compartilhados entre os fluxos ─────
-    static Scanner teclado = new Scanner(System.in); // único Scanner do programa, usado por todos os fluxos
-    static ArrayList<TipoCliente> clientes = new ArrayList<>(); // lista de clientes cadastrados em memória
+    static Scanner teclado = new Scanner(System.in); // teclado usado em todo o programa
+    static ArrayList<TipoCliente> clientes = new ArrayList<>(); // lista de clientes cadastrados
 
-    // estoque único, compartilhado entre o fluxo de Estoque e o de Registrar Compra
+    // estoque da loja, usado tanto no menu de estoque quanto na hora de registrar uma compra
     static Estoque[] estoques = {
-            new Estoque("Regata da Copa - P", 10),              // estoque inicial: 10 unidades
+            new Estoque("Regata da Copa - P", 10),
             new Estoque("Regata da Copa - M", 10),
             new Estoque("Regata da Copa - G", 10),
             new Estoque("Regata da Copa - GG", 10),
@@ -21,56 +20,56 @@ public class Main {
             new Estoque("Camiseta da Copa (Brasil) - GG", 10)
     };
 
-    public static void main(String[] args) { // ponto de entrada do programa
+    public static void main(String[] args) {
 
-        int opcao = -1; // -1 só para garantir que o while abaixo execute pelo menos uma vez
+        int opcao = -1;
 
-        while (opcao != 0) { // repete o menu principal até o usuário digitar 0 (Sair)
+        while (opcao != 0) { // repete o menu principal até o usuário digitar 0
 
-            System.out.println("\n############################################"); // imprime cabeçalho da loja
+            System.out.println("\n############################################");
             System.out.println("#         LOJA DA COPA 2026                #");
             System.out.println("############################################");
-            System.out.println("\n========= MENU PRINCIPAL =========");          // imprime o menu principal
+            System.out.println("\n========= MENU PRINCIPAL =========");
             System.out.println("1 - Cliente (cadastro / busca)");
             System.out.println("2 - Registrar Compra");
             System.out.println("3 - Estoque");
             System.out.println("4 - Itens da loja");
             System.out.println("0 - Sair");
             System.out.print("Escolha uma opção: ");
-            opcao = teclado.nextInt(); // lê a opção escolhida pelo usuário
+            opcao = teclado.nextInt();
 
-            switch (opcao) { // direciona para o fluxo correspondente à opção escolhida
+            switch (opcao) {
                 case 1:
-                    fluxoCliente(); // abre o menu de cliente (cadastrar/buscar/listar)
+                    menuCliente();
                     break;
                 case 2:
-                    fluxoRegistrarCompra(); // abre o fluxo completo de registrar uma compra
+                    registrarCompra();
                     break;
                 case 3:
-                    fluxoEstoque(); // abre o menu de consulta/gestão de estoque
+                    menuEstoque();
                     break;
                 case 4:
-                    fluxoItensDaLoja(); // mostra o catálogo de produtos da loja
+                    verItensDaLoja();
                     break;
                 case 0:
-                    System.out.println("\nEncerrando o sistema. Até logo!"); // mensagem de despedida
+                    System.out.println("\nEncerrando o sistema. Até logo!");
                     break;
                 default:
-                    System.out.println("Opção inválida! Tente novamente."); // opção fora do menu
+                    System.out.println("Opção inválida! Tente novamente.");
             }
         }
 
-        teclado.close(); // fecha o Scanner ao sair do programa, liberando o recurso do teclado
+        teclado.close();
     }
 
-    // Carrega produtos de teste no catálogo do carrinho sem exibir a mensagem "Produto cadastrado: ..." no console (silencia temporariamente o System.out só durante essa carga inicial,sem precisar alterar a classe Carrinho).
-    static void carregarProdutosSemImprimir(Carrinho carrinho) {
-        java.io.PrintStream original = System.out; // guarda a referência da saída padrão original
-        System.setOut(new java.io.PrintStream(new java.io.OutputStream() { // troca a saída padrão por uma "muda"
-            @Override public void write(int b) { /* descarta a saída, não imprime nada */ }
+    // carrega os produtos da loja no catálogo do carrinho sem imprimir
+    // a mensagem "Produto cadastrado: ..." toda vez que o programa inicia esse carrinho
+    static void carregarProdutos(Carrinho carrinho) {
+        java.io.PrintStream original = System.out;
+        System.setOut(new java.io.PrintStream(new java.io.OutputStream() {
+            @Override public void write(int b) { }
         }));
         try {
-            // cadastra cada produto da loja no catálogo do carrinho (id, preço, nome)
             carrinho.cadastrarNovoProduto(new Produto(1, 59.90, "Regata da Copa - P"));
             carrinho.cadastrarNovoProduto(new Produto(2, 69.90, "Regata da Copa - M"));
             carrinho.cadastrarNovoProduto(new Produto(3, 79.90, "Regata da Copa - G"));
@@ -80,13 +79,13 @@ public class Main {
             carrinho.cadastrarNovoProduto(new Produto(7, 89.90, "Camiseta da Copa (Brasil) - G"));
             carrinho.cadastrarNovoProduto(new Produto(8, 99.90, "Camiseta da Copa (Brasil) - GG"));
         } finally {
-            System.setOut(original); // restaura a saída padrão original, mesmo se algo der erro acima
+            System.setOut(original);
         }
     }
 
-    // nome do produto correspondente a cada ID do carrinho (precisa bater exatamente com o nome usado no array estoques[] para conseguir casar os dois)
+    // descobre o nome do produto do estoque a partir do id usado no carrinho
     static String nomeProdutoPorId(int id) {
-        switch (id) { // converte o id do produto no carrinho para o nome usado no estoque
+        switch (id) {
             case 1: return "Regata da Copa - P";
             case 2: return "Regata da Copa - M";
             case 3: return "Regata da Copa - G";
@@ -95,200 +94,198 @@ public class Main {
             case 6: return "Camiseta da Copa (Brasil) - M";
             case 7: return "Camiseta da Copa (Brasil) - G";
             case 8: return "Camiseta da Copa (Brasil) - GG";
-            default: return null; // id desconhecido, não tem produto correspondente
+            default: return null;
         }
     }
 
-    // procura, no array de estoque compartilhado, o item com o nome informado
+    // procura no estoque o item com o nome informado
     static Estoque buscarEstoquePorNome(String nomeProduto) {
-        for (Estoque e : estoques) { // percorre todos os itens do estoque
-            if (e.getTipoProduto().equals(nomeProduto)) { // compara o nome do item com o nome buscado
-                return e; // encontrou, retorna o item de estoque correspondente
+        for (Estoque e : estoques) {
+            if (e.getTipoProduto().equals(nomeProduto)) {
+                return e;
             }
         }
-        return null; // não encontrou nenhum item de estoque com esse nome
+        return null;
     }
 
-    // Valida se há estoque suficiente para TODOS os itens do pedido.
-    // Se faltar qualquer item, não abate nada e retorna false (compra bloqueada). Se houver estoque para tudo, abate de fato e retorna true.
+    // confere se tem estoque suficiente para todos os itens pedidos.
+    // se faltar algum item, nao desconta nada e bloqueia a compra.
+    // se tiver estoque para tudo, desconta de fato e libera a compra.
     static boolean validarEAbaterEstoque(java.util.Map<Integer, Integer> pedidoPorId) {
 
-        if (pedidoPorId.isEmpty()) { // se o carrinho está vazio, não há nada para validar
+        if (pedidoPorId.isEmpty()) {
             return true; // carrinho vazio, nada a validar
         }
 
-        // 1ª passada: só verifica, sem alterar nada ainda
-        for (java.util.Map.Entry<Integer, Integer> pedido : pedidoPorId.entrySet()) { // percorre cada item pedido
-            String nomeProduto = nomeProdutoPorId(pedido.getKey()); // descobre o nome do produto pelo id
-            int quantidadePedida = pedido.getValue(); // quantidade que o cliente quer comprar desse item
+        for (java.util.Map.Entry<Integer, Integer> pedido : pedidoPorId.entrySet()) {
+            String nomeProduto = nomeProdutoPorId(pedido.getKey());
+            int quantidadePedida = pedido.getValue();
 
-            Estoque estoqueDoItem = (nomeProduto != null) ? buscarEstoquePorNome(nomeProduto) : null; // localiza o estoque correspondente
+            Estoque estoqueDoItem = (nomeProduto != null) ? buscarEstoquePorNome(nomeProduto) : null;
 
-            if (estoqueDoItem == null) { // produto não tem controle de estoque cadastrado
+            if (estoqueDoItem == null) {
                 System.out.println("\nProduto sem controle de estoque cadastrado (ID " + pedido.getKey() + ").");
-                return false; // bloqueia a compra
+                return false;
             }
-            if (!estoqueDoItem.disponivel(quantidadePedida)) { // checa se a quantidade pedida está disponível
-                return false; // disponivel() já imprime o motivo (estoque insuficiente)
+            if (!estoqueDoItem.disponivel(quantidadePedida)) {
+                return false;
             }
         }
 
-        // 2ª passada: já garantido que há estoque para tudo, agora abate de fato
-        for (java.util.Map.Entry<Integer, Integer> pedido : pedidoPorId.entrySet()) { // percorre cada item pedido de novo
-            String nomeProduto = nomeProdutoPorId(pedido.getKey()); // descobre o nome do produto pelo id
-            Estoque estoqueDoItem = buscarEstoquePorNome(nomeProduto); // localiza o estoque correspondente
-            estoqueDoItem.removeProduto(pedido.getValue()); // retira do estoque a quantidade comprada
+        for (java.util.Map.Entry<Integer, Integer> pedido : pedidoPorId.entrySet()) {
+            String nomeProduto = nomeProdutoPorId(pedido.getKey());
+            Estoque estoqueDoItem = buscarEstoquePorNome(nomeProduto);
+            estoqueDoItem.removeProduto(pedido.getValue());
         }
 
-        return true; // estoque validado e abatido com sucesso
+        return true;
     }
 
-    //  CLIENTE
-    static void fluxoCliente() {
+    // menu de cliente: cadastrar, buscar e listar (sem registrar compra aqui)
+    static void menuCliente() {
 
-        int opcao = -1; // controla o loop do submenu de cliente
+        int opcao = -1;
 
-        while (opcao != 0) { // repete até o usuário escolher voltar (0)
+        while (opcao != 0) {
             System.out.println("\n========== MENU CLIENTE ==========");
             System.out.println("1 - Cadastrar novo cliente");
             System.out.println("2 - Buscar cliente (CPF)");
             System.out.println("3 - Listar todos os clientes");
             System.out.println("0 - Voltar ao menu principal");
             System.out.print("Escolha: ");
-            opcao = teclado.nextInt();   // lê a opção escolhida
-            teclado.nextLine();          // limpa o buffer após a entrada do inteiro
+            opcao = teclado.nextInt();
+            teclado.nextLine();
 
             switch (opcao) {
                 case 1:
-                    TipoCliente novo = cadastrarNovoCliente(); // coleta os dados e cria o cliente
-                    clientes.add(novo);                        // adiciona o novo cliente à lista
+                    TipoCliente novo = cadastrarNovoCliente();
+                    clientes.add(novo);
                     System.out.println("Cliente cadastrado com sucesso!");
-                    novo.mostraInfo();                          // exibe as informações do cliente criado
+                    novo.mostraInfo();
                     break;
                 case 2:
-                    TipoCliente encontrado = buscarCliente(); // procura cliente pelo CPF digitado
+                    TipoCliente encontrado = buscarCliente();
                     if (encontrado == null) {
                         System.out.println("Cliente não encontrado.");
                     } else {
-                        encontrado.mostraInfo(); // exibe as informações do cliente encontrado
+                        encontrado.mostraInfo();
                     }
                     break;
                 case 3:
-                    if (clientes.isEmpty()) { // checa se já existe algum cliente cadastrado
+                    if (clientes.isEmpty()) {
                         System.out.println("Nenhum cliente cadastrado ainda.");
                     } else {
                         System.out.println("\n--- CLIENTES CADASTRADOS ---");
-                        for (TipoCliente c : clientes) { // percorre e exibe todos os clientes
+                        for (TipoCliente c : clientes) {
                             c.mostraInfo();
                         }
                     }
                     break;
                 case 0:
-                    System.out.println("Voltando ao menu principal..."); // sai do loop pelo while
+                    System.out.println("Voltando ao menu principal...");
                     break;
                 default:
-                    System.out.println("Opção inválida!"); // opção fora do menu
+                    System.out.println("Opção inválida!");
             }
         }
     }
 
-    // coleta os dados do cliente pelo teclado e cria o objeto TipoCliente
+    // pede os dados do cliente pelo teclado e cria o objeto
     static TipoCliente cadastrarNovoCliente() {
         System.out.println("========== CADASTRO DE CLIENTE ==========");
 
         System.out.println("Digite o nome do cliente: ");
-        String nome = teclado.nextLine(); // lê o nome digitado
+        String nome = teclado.nextLine();
 
         System.out.println("Digite o CPF do cliente: ");
-        String cpf = teclado.nextLine(); // lê o CPF digitado
+        String cpf = teclado.nextLine();
 
         System.out.println("Digite o telefone do cliente: ");
-        String telefone = teclado.nextLine(); // lê o telefone digitado
+        String telefone = teclado.nextLine();
 
         System.out.println("Digite o email do cliente: ");
-        String email = teclado.nextLine(); // lê o email digitado
+        String email = teclado.nextLine();
 
         System.out.println("Digite o endereço do cliente: ");
-        String endereco = teclado.nextLine(); // lê o endereço digitado
+        String endereco = teclado.nextLine();
 
-        return new TipoCliente(nome, cpf, telefone, email, endereco); // cria e retorna o cliente
+        return new TipoCliente(nome, cpf, telefone, email, endereco);
     }
 
-    // procura um cliente já cadastrado pelo CPF digitado
+    // procura um cliente ja cadastrado pelo CPF
     static TipoCliente buscarCliente() {
         System.out.println("Digite o CPF do cliente: ");
-        String busca = teclado.nextLine(); // lê o CPF a ser buscado
+        String busca = teclado.nextLine();
 
-        for (TipoCliente c : clientes) { // percorre todos os clientes cadastrados
-            if (c.getCpf().equals(busca)) { // compara o CPF de cada cliente com o buscado
+        for (TipoCliente c : clientes) {
+            if (c.getCpf().equals(busca)) {
                 System.out.println("Cliente encontrado: " + c.getNome());
-                return c; // retorna o cliente encontrado
+                return c;
             }
         }
-        return null; // percorreu a lista toda e não achou
+        return null;
     }
 
-    // Identifica o cliente (novo ou já cadastrado). Retorna null se usuário não encontrar o cliente e optar por não cadastrá-lo.
+    // pergunta se o cliente é novo ou já cadastrado e devolve o cliente identificado.
+    // retorna null se não conseguir identificar e o usuário não quiser se cadastrar.
     static TipoCliente identificarOuCadastrarCliente() {
 
         System.out.println("\n1 - Cliente novo");
         System.out.println("2 - Cliente já cadastrado");
         System.out.print("Escolha: ");
-        int tipo = teclado.nextInt(); // lê se é cliente novo (1) ou já cadastrado (2)
-        teclado.nextLine();           // limpa o buffer após a entrada do inteiro
+        int tipo = teclado.nextInt();
+        teclado.nextLine();
 
-        TipoCliente cliente; // vai guardar o cliente identificado ao final do método
+        TipoCliente cliente;
 
-        if (tipo == 1) { // cliente novo
-            cliente = cadastrarNovoCliente();    // coleta os dados e cria o cliente
-            clientes.add(cliente);               // adiciona à lista de clientes
+        if (tipo == 1) {
+            cliente = cadastrarNovoCliente();
+            clientes.add(cliente);
             System.out.println("Cliente cadastrado com sucesso!");
-        } else { // cliente já cadastrado
-            cliente = buscarCliente(); // procura o cliente pelo CPF
+        } else {
+            cliente = buscarCliente();
 
-            if (cliente == null) { // não encontrou o cliente buscado
+            if (cliente == null) {
                 System.out.println("Cliente não encontrado.");
                 System.out.println("Deseja cadastrá-lo agora? (1 - Sim / 2 - Não): ");
-                int resposta = teclado.nextInt(); // lê a escolha de cadastrar ou não
-                teclado.nextLine();                // limpa o buffer
+                int resposta = teclado.nextInt();
+                teclado.nextLine();
 
-                if (resposta == 1) { // optou por cadastrar agora
+                if (resposta == 1) {
                     cliente = cadastrarNovoCliente();
                     clientes.add(cliente);
                     System.out.println("Cliente cadastrado com sucesso!");
-                } else { // optou por não cadastrar
+                } else {
                     System.out.println("Não cadastrado.");
-                    return null; // sem cliente identificado
+                    return null;
                 }
             }
         }
-        return cliente; // retorna o cliente novo ou encontrado
+        return cliente;
     }
 
-    //  REGISTRAR COMPRA
-    static void fluxoRegistrarCompra() {
+    // registra uma compra: identifica o cliente, abre o carrinho dele,
+    // confere o estoque, fecha a compra numerada e leva direto pro pagamento
+    static void registrarCompra() {
 
         System.out.println("\n========== REGISTRAR COMPRA ==========");
-        TipoCliente cliente = identificarOuCadastrarCliente(); // identifica ou cadastra o cliente da compra
+        TipoCliente cliente = identificarOuCadastrarCliente();
 
-        if (cliente == null) { // não foi possível identificar o cliente
+        if (cliente == null) {
             System.out.println("Compra não registrada.");
-            return; // sem cliente não há como continuar
+            return;
         }
 
-        // ── a partir daqui o cliente já está identificado: abre o carrinho ──
-        Carrinho carrinho = new Carrinho(); // cria um carrinho novo para esta compra
+        Carrinho carrinho = new Carrinho();
+        carregarProdutos(carrinho);
 
-        // produtos de teste, carregados sem exibir "Produto cadastrado: ..." no console
-        carregarProdutosSemImprimir(carrinho); // popula o catálogo do carrinho com os produtos da loja
+        // guarda em paralelo o que foi pedido (id -> quantidade), pois o
+        // Carrinho não tem um jeito de listar os itens pra fora da classe
+        java.util.Map<Integer, Integer> pedidoPorId = new java.util.HashMap<>();
 
-        // rastreia em paralelo o que foi pedido (id do produto -> quantidade),
-        // necessário porque o Carrinho não expõe os itens publicamente
-        java.util.Map<Integer, Integer> pedidoPorId = new java.util.HashMap<>(); // guarda id -> quantidade pedida
+        int escolha = -1;
 
-        int escolha = -1; // controla o loop do submenu do carrinho
-
-        while (escolha != 5) { // repete até o usuário escolher finalizar a compra (5)
+        while (escolha != 5) {
 
             System.out.println("\n|======== CARRINHO DE " + cliente.getNome() + " ========|");
             System.out.println("|1 -> Ver produtos disponiveis");
@@ -298,81 +295,78 @@ public class Main {
             System.out.println("|5 -> Finalizar compra");
             System.out.println("|Escolhe uma opção");
 
-            escolha = teclado.nextInt(); // lê a opção escolhida no submenu do carrinho
+            escolha = teclado.nextInt();
 
             switch (escolha) {
                 case 1:
-                    carrinho.listrCatalogo(); // exibe a lista de produtos disponíveis
+                    carrinho.listrCatalogo();
                     break;
 
                 case 2:
                     System.out.print("Digite o ID do produto: ");
-                    int idAdicionar = teclado.nextInt(); // lê o id do produto a adicionar
+                    int idAdicionar = teclado.nextInt();
                     System.out.print("Digite a quantidade: ");
-                    int quantidade = teclado.nextInt(); // lê a quantidade desejada
-                    carrinho.adicionarAoCarrinho(idAdicionar, quantidade); // adiciona o item ao carrinho
-                    pedidoPorId.merge(idAdicionar, quantidade, Integer::sum); // soma a quantidade no rastreamento paralelo
+                    int quantidade = teclado.nextInt();
+                    carrinho.adicionarAoCarrinho(idAdicionar, quantidade);
+                    pedidoPorId.merge(idAdicionar, quantidade, Integer::sum);
                     break;
 
                 case 3:
                     System.out.print("Digite o ID do produto para remover: ");
-                    int idRemover = teclado.nextInt(); // lê o id do produto a remover
-                    carrinho.removerProduto(idRemover); // remove o item do carrinho
-                    pedidoPorId.remove(idRemover); // remoção tira o item inteiro do carrinho
+                    int idRemover = teclado.nextInt();
+                    carrinho.removerProduto(idRemover);
+                    pedidoPorId.remove(idRemover);
                     break;
 
                 case 4:
-                    carrinho.listarItensCarrinho(); // exibe os itens já adicionados ao carrinho
+                    carrinho.listarItensCarrinho();
                     break;
 
                 case 5:
-                    System.out.println("Finalizando compra..."); // sai do loop pelo while
+                    System.out.println("Finalizando compra...");
                     break;
 
                 default:
-                    System.out.println("Opção inválida! Digite um número entre 1 e 5."); // opção fora do menu
+                    System.out.println("Opção inválida! Digite um número entre 1 e 5.");
                     break;
             }
         }
 
-        // ── valida e abate do estoque ANTES de fechar a compra ──
-        if (!validarEAbaterEstoque(pedidoPorId)) { // checa se há estoque suficiente para tudo
+        if (!validarEAbaterEstoque(pedidoPorId)) {
             System.out.println("\nCompra NÃO finalizada por falta de estoque. Ajuste o carrinho e tente novamente.");
-            return; // interrompe o fluxo sem fechar a compra
+            return;
         }
 
-        // ── fecha a compra numerada, vinculando cliente + carrinho ──
-        Compra compra = new Compra(cliente, carrinho); // cria a compra com número sequencial automático
-        cliente.registrarCompra(); // mantém a contagem de compras do cliente (nível comum/premium)
-        compra.mostraResumo(); // exibe o resumo da compra no console
+        Compra compra = new Compra(cliente, carrinho);
+        cliente.registrarCompra(); // soma essa compra na contagem do cliente (nível comum/premium)
+        compra.mostraResumo();
         System.out.println("Compra registrada com sucesso!");
 
-        // ── total do carrinho vai direto para o pagamento, sem digitar valor ──
-        double totalCompra = compra.getTotal(); // pega o valor total do carrinho
+        double totalCompra = compra.getTotal();
 
-        if (totalCompra <= 0) { // carrinho vazio, nada para cobrar
+        if (totalCompra <= 0) {
             System.out.println("\nCarrinho vazio — nada a pagar.");
-            return; // não cria pagamento de valor zero
+            return;
         }
 
         System.out.println("\nVamos prosseguir para o pagamento desta compra.");
 
-        // aplica o desconto conforme o nível do cliente (Comum/Premium)
-        String tipoClienteDesconto = (cliente.getNivel() == TipoCliente.PREMIUM) ? "premium" : "comum"; // define o tipo para o desconto
-        Desconto desconto = new Desconto(tipoClienteDesconto); // cria o desconto de acordo com o nível do cliente
-        double totalComDesconto = desconto.calculaDesconto(totalCompra); // calcula o valor já com o desconto aplicado
+        // desconto de acordo com o nível do cliente (comum ou premium)
+        String tipoClienteDesconto = (cliente.getNivel() == TipoCliente.PREMIUM) ? "premium" : "comum";
+        Desconto desconto = new Desconto(tipoClienteDesconto);
+        double totalComDesconto = desconto.calculaDesconto(totalCompra);
 
         System.out.println("\n----- DESCONTO APLICADO -----");
-        System.out.println(desconto); // mostra o tipo de cliente e o percentual de desconto
+        System.out.println(desconto);
         System.out.printf("Total do carrinho : R$ %.2f%n", totalCompra);
         System.out.printf("Total com desconto: R$ %.2f%n", totalComDesconto);
         System.out.println("------------------------------");
 
-        Pagamento pagamento = new Pagamento(totalComDesconto); // cria o pagamento já com o valor final, sem digitação
+        Pagamento pagamento = new Pagamento(totalComDesconto); // valor já vem do carrinho, sem digitar nada
 
-        int opPag = -1; // controla o loop do submenu de pagamento
+        int opPag = -1;
 
-        while (opPag != 0) { // repete até o pagamento ser concluído ou cancelado
+        while (opPag != 0) {
 
             System.out.println("\n--- MENU DE PAGAMENTO ---");
             System.out.println("1 - Pagar via Pix");
@@ -382,124 +376,123 @@ public class Main {
             System.out.println("5 - Emitir comprovante (console + .txt)");
             System.out.println("0 - Voltar ao menu principal");
             System.out.print("Escolha: ");
-            opPag = teclado.nextInt(); // lê a opção do menu de pagamento
+            opPag = teclado.nextInt();
 
             switch (opPag) {
                 case 1:
-                    pagamento.pix(teclado); // processa o pagamento via Pix
-                    opPag = 0; // força a saída do loop após o pagamento
+                    pagamento.pix(teclado);
+                    opPag = 0;
                     break;
                 case 2:
-                    pagamento.credito(teclado); // processa o pagamento via crédito
+                    pagamento.credito(teclado);
                     opPag = 0;
                     break;
                 case 3:
-                    pagamento.debito(teclado); // processa o pagamento via débito
+                    pagamento.debito(teclado);
                     opPag = 0;
                     break;
                 case 4:
-                    pagamento.cancelar(); // cancela o pagamento
+                    pagamento.cancelar();
                     opPag = 0;
                     break;
                 case 5:
                     System.out.print("Deseja emitir o comprovante?(1-SIM/2-NÃO: ");
-                    int opcaoComp = teclado.nextInt(); // lê se deseja emitir o comprovante
+                    int opcaoComp = teclado.nextInt();
                     if (opcaoComp == 1) {
-                        pagamento.emitirComprovante(); // emite o comprovante no console e em .txt
+                        pagamento.emitirComprovante();
                         opPag = 0;
                     } else {
-                        System.out.println("Comprovante não emitido."); // não emite, permanece no menu
+                        System.out.println("Comprovante não emitido.");
                     }
                     break;
                 case 0:
-                    System.out.println("Voltando ao menu principal..."); // sai do loop pelo while
+                    System.out.println("Voltando ao menu principal...");
                     break;
                 default:
-                    System.out.println("Opção inválida!"); // opção fora do menu
+                    System.out.println("Opção inválida!");
             }
         }
     }
 
+    // menu de estoque: só consultar e gerenciar quantidade, sem pagamento
+    static void menuEstoque() {
 
-    //  ESTOQUE
-    static void fluxoEstoque() {
+        int opcao = -1;
 
-        int opcao = -1; // controla o loop do submenu de estoque
-
-        while (opcao != 0) { // repete até o usuário escolher voltar (0)
+        while (opcao != 0) {
 
             System.out.println("\n--- ESTOQUE ---");
-            for (int i = 0; i < estoques.length; i++) { // percorre todos os itens do estoque
+            for (int i = 0; i < estoques.length; i++) {
                 System.out.printf("%d - %-40s (Estoque: %d)%n",
-                        i + 1,                          // número do item na lista (base 1)
-                        estoques[i].getTipoProduto(),   // nome do produto
-                        estoques[i].getQtdProdutos());  // quantidade atual em estoque
+                        i + 1,
+                        estoques[i].getTipoProduto(),
+                        estoques[i].getQtdProdutos());
             }
             System.out.println("0 - Voltar ao menu principal");
             System.out.print("Escolha o produto (número): ");
-            opcao = teclado.nextInt(); // lê o número do produto escolhido
+            opcao = teclado.nextInt();
 
-            if (opcao == 0) { // usuário escolheu voltar
+            if (opcao == 0) {
                 System.out.println("Voltando ao menu principal...");
-                break; // sai do loop externo
+                break;
             }
 
-            int idxProd = opcao - 1; // converte para índice do array (base 0)
+            int idxProd = opcao - 1;
 
-            if (idxProd < 0 || idxProd >= estoques.length) { // valida se o índice existe no array
+            if (idxProd < 0 || idxProd >= estoques.length) {
                 System.out.println("Produto inválido!");
-                continue; // volta a mostrar a lista de estoque
+                continue;
             }
 
-            Estoque estoque = estoques[idxProd]; // referencia o item de estoque escolhido
+            Estoque estoque = estoques[idxProd];
 
-            int opEst = -1; // controla o loop do submenu do item de estoque
+            int opEst = -1;
 
-            while (opEst != 0) { // repete até o usuário escolher voltar (0)
+            while (opEst != 0) {
 
                 System.out.println("\n--- MENU DE ESTOQUE ---");
-                System.out.println("Produto : " + estoque.getTipoProduto());   // nome do produto escolhido
-                System.out.println("Qtd atual: " + estoque.getQtdProdutos());   // quantidade atual
+                System.out.println("Produto : " + estoque.getTipoProduto());
+                System.out.println("Qtd atual: " + estoque.getQtdProdutos());
                 System.out.println("1 - Adicionar produtos");
                 System.out.println("2 - Remover produtos");
                 System.out.println("3 - Verificar disponibilidade");
                 System.out.println("0 - Voltar");
                 System.out.print("Escolha: ");
-                opEst = teclado.nextInt(); // lê a opção do menu de estoque
+                opEst = teclado.nextInt();
 
                 switch (opEst) {
                     case 1:
                         System.out.print("Quantos produtos deseja adicionar? ");
-                        estoque.addProduto(teclado.nextInt()); // soma a quantidade ao estoque
+                        estoque.addProduto(teclado.nextInt());
                         break;
                     case 2:
                         System.out.print("Quantos produtos deseja remover? ");
-                        estoque.removeProduto(teclado.nextInt()); // subtrai a quantidade do estoque
+                        estoque.removeProduto(teclado.nextInt());
                         break;
                     case 3:
                         System.out.print("Quantos produtos deseja verificar? ");
-                        estoque.disponivel(teclado.nextInt()); // verifica se a quantidade está disponível
+                        estoque.disponivel(teclado.nextInt());
                         break;
                     case 0:
-                        System.out.println("Voltando ao menu anterior..."); // sai do loop pelo while
+                        System.out.println("Voltando ao menu anterior...");
                         break;
                     default:
-                        System.out.println("Opção inválida!"); // opção fora do menu
+                        System.out.println("Opção inválida!");
                 }
             }
 
-            opcao = -1; // volta a mostrar a lista de estoque, mantendo o loop externo aberto
+            opcao = -1; // volta a mostrar a lista de estoque
         }
     }
 
-    //  ITENS DA LOJA
-    static void fluxoItensDaLoja() {
+    // mostra o catálogo de produtos da loja
+    static void verItensDaLoja() {
 
-        Carrinho catalogo = new Carrinho();           // cria um carrinho só para usar seu catálogo
-        carregarProdutosSemImprimir(catalogo);        // popula o catálogo com os produtos da loja
+        Carrinho catalogo = new Carrinho();
+        carregarProdutos(catalogo);
 
         System.out.println("\n========== ITENS DA LOJA ==========");
-        catalogo.listrCatalogo();                     // exibe a lista de produtos disponíveis
+        catalogo.listrCatalogo();
         System.out.println("====================================");
     }
 }
